@@ -8,9 +8,14 @@ function callback(name){
 	};
 }
 
-// var crm = new mora.I2cInterface({sda:B6, scl:B7});
-
+var crmi = new mora.I2cInterface({sda:B7, scl:B6});
 var board = new mora.UserInterface();
-board.onSinglePress(B3, callback(B3));
-board.onSinglePress(B4, callback(B4));
-board.onSinglePress(B5, callback(B5));
+board.onSinglePress(B3, function(){
+	crmi.setI('confirm', 3000);
+});
+board.onSinglePress(B4, function(){
+	crmi.setI('write', 0);
+});
+board.onSinglePress(B5, function(){
+	crmi.setI('update', 2000);
+});

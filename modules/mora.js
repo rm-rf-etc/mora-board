@@ -73,47 +73,51 @@ Abstraction class for I2C communication with the Mora
 current regulator module (CRM).
 
 */
-exports.I2cInterface = function I2cInterface(pins /* {sda:B6, scl:B7} */) {
+exports.I2cInterface = function I2cInterface(pins /* {sda:B7, scl:B6} */) {
 
 	if (!pins || !pins.sda || !pins.scl) throw new Error('Missing SDA/SCL params');
 	I2C1.setup(pins);
 
+	var self = this;
+
+	var vref = 4.096;
 	var sending = false;
-	var crmi = {
-		setI: {
-			address:   0x8,
-			wInputReg: 0x0,
-			uDacReg:   0x1,
-			wuDacReg:  0x3,
-			off:       0x4,
-			setIref:   0x6,
-			setEref:   0x7,
-		},
-		readI: {
-			address: 0x9,
-		},
-		readV: {
-			address: 0xa,
-		},
+
+	var set_i = {
+		address:  0x20,
+		write:    0x0,
+		confirm:  0x1,
+		update:   0x3,
+		shutdown: 0x4,
+		setIref:  0x6,
+		setEref:  0x7,
 	};
-	var bytes = [
-		crmi.setI.wInputReg,
-		crmi.setI.uDacReg
-	];
+	var get_i = {
+		address: 0x66,
+	};
+	var get_v = {
+		address: 0x66,
+	};
+	var get_b = {
+		address: 0x55,
+	};
 
-	function toi2c(val) {
 
-		return [val >> 8, val & 0xFF];
-	}
 
-	function cmd(val) {
+	self.setI = function(action, val) {
 
-		I2C1.writeTo(crmi.setI.address, bytes);
-	}
+		if (!set_i.hasOwnProperty(action)) return;
 
-	this.i2cStart = function(freq) {
+		I2C1.writeTo(set_i.address, [
+			set_i[action]
+		,	val >> 8
+		,	val & 0xff
+		]);
+	};
 
-		freq = freq | 100;
+	self.i2cStart = function(freq) {
+
+		freq = freq || 100;
 		setInterval(function(){
 			if (sending) {
 				console.log(Date.now());
@@ -121,7 +125,7 @@ exports.I2cInterface = function I2cInterface(pins /* {sda:B6, scl:B7} */) {
 		}, freq);
 	};
 
-	this.i2cStop = function() {
+	self.i2cStop = function() {
 
 		clearInterval();
 	};
